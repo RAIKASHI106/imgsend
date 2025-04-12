@@ -1,49 +1,193 @@
-import {
-  SlashCommand,
-  SlashCommandParser,
-  SlashCommandArgument,
-  ARGUMENT_TYPE,
-} from "../../../extensions.js";
+import { sendSystemMessage } from '../../../../script.js';
+import { getContext } from '../../../extensions.js';
+import { registerSlashCommand } from '../../../slash-commands.js';
+import { isTrueBoolean } from '../../../utils.js';
 
-// The name of the extension (it should match your folder name)
-const extensionName = "simple-extension";
-const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
 
-// Register a simple command
-function registerSimpleCommand() {
-  SlashCommandParser.addCommandObject(
-    SlashCommand.fromProps({
-      name: "hello",
-      callback: (namedArgs, unnamedArgs) => {
-        return "Hello, world! This is a simple test command.";
-      },
-      returns: "returns a simple greeting message",
-      unnamedArgumentList: [
-        SlashCommandArgument.fromProps({
-          description: "A placeholder argument (not required)",
-          typeList: ARGUMENT_TYPE.STRING,
-          isRequired: false,
-        }),
-      ],
-      helpString: `
+
+
+const showHelp = () => {
+    const examples = [
+        [
+            '/ctx chatId | /echo',
+            ' – gets the ID of he active chat',
+        ],
+        [
+            '/ctx characters::5::avatar | /echo',
+            ' – gets the avatar filename of the character at index 5 (index starts at 0)',
+        ],
+        [
+            '/ctx characters(find name eq Alice)::avatar | /echo',
+            ' – gets the avatar filename of the character named Alice',
+        ],
+        [
+            '/ctx groupId | /ctx groups(find id eq {{pipe}})::members | /echo',
+            ' – gets the list of members of the current group (their avatar filenames)',
+        ],
+        [
+            '/ctx groupId | /ctx groups(find id eq {{pipe}})::members::1 | /ctx characters(find avatar eq {{pipe}})::name |/echo',
+            ' – gets the name of the second member of the current group (index starts at 0)',
+        ],
+    ];
+    sendSystemMessage('generic', `
+        <h3>/ctx</h3>
         <div>
-          A simple test command that returns a greeting message.
+            /ctx gives you access to SillyTavern's application context.
         </div>
         <div>
-          <strong>Example:</strong>
-          <pre><code class="language-stscript">/hello</code></pre>
+            Open your browser's dev tools (F12) and type the following to see what data is available.
         </div>
-      `,
-    })
-  );
-}
+        <div>
+            <span class="monospace">SillyTavern.getContext()</span>
+        </div>
 
-// Initialize the extension and register the command
-jQuery(async () => {
-  try {
-    registerSimpleCommand();
-    console.log("[Simple Extension] 'hello' command registered successfully.");
-  } catch (error) {
-    console.error("[Simple Extension] Error registering command:", error);
-  }
-});
+        <hr>
+
+        <h3>Accessing Values</h3>
+        <div>
+            Use <span class="monospace">::</span> to access child values (items in a list or dictionary).
+        </div>
+        <div>
+            Example: <span class="monospace">/ctx characters::10::first_mes | /echo</span>
+        </div>
+
+        <hr>
+
+        <h3>Filtering Lists</h3>
+        <div>
+            Lists an be filtered and searched with several functions:
+        </div>
+        <ul>
+            <li><span class="monospace">find</span> - Find one list item by comparing one of its properties against a provided value.</li>
+            <li><span class="monospace">findIndex</span> - Find one list item's index (position in the list) by comparing one of its properties against a provided value.</li>
+            <li><span class="monospace">filter</span> - Get a list with all matching item's by comparing one of the item's properties against a provided value.</li>
+        </ul>
+        <div>
+            They are all used the same way:
+        </div>
+        <div>
+            <span class="monospace">/ctx characters(find name eq Seraphina) | /echo</span>
+        </div>
+        <div>
+            <span class="monospace">/ctx characters(findIndex name eq Coding Sensei) | /echo</span>
+        </div>
+        <div>
+            <span class="monospace">/ctx characters(filter fav eq true) | /echo</span>
+        </div>
+        <div>
+            Comparison operations for the find and filter functions are as follows:
+        </div>
+        <ul>
+            <li><span class="monospace">eq</span> – property equals value</li>
+            <li><span class="monospace">neq</span> – property does not equal value</li>
+            <li><span class="monospace">lt</span> – property is less than value</li>
+            <li><span class="monospace">lte</span> – property is less than or equals value</li>
+            <li><span class="monospace">gt</span> – property is greater than value</li>
+            <li><span class="monospace">gte</span> – property is greater than or equals value</li>
+            <li><span class="monospace">in</span> – property is included in value (character in text or item in list)</li>
+            <li><span class="monospace">nin</span> – property is not included in value</li>
+        </ul>
+
+        <h3>Map</h3>
+        <div>
+            To extract only one property of a dictionary or object you can use map.
+        </div>
+        <div>
+            <span class="monospace">/ctx characters(map name) | /echo</span>
+        </div>
+        <div>
+            Can be combined with filters.
+        </div>
+        <div>
+            <span class="monospace">/ctx characters(filter fav eq true)(map name) | /echo</span>
+        </div>
+
+        <hr>
+
+        <h3>Examples</h3>
+        ${examples.map(it=>`<div><span class="monospace">${it[0]}</span></div><div>${it[1]}</div>\n`).join('\n')}
+    `);
+};
+
+const applyRule = (a, b, rule) => {
+    try {
+        return ({
+            'eq': ()=>a == b,
+            'neq': ()=>a != b,
+            'lt': ()=>a < b,
+            'lte': ()=>a <= b,
+            'gt': ()=>a > b,
+            'gte': ()=>a >= b,
+            'in': ()=>b.includes(a),
+            'nin': ()=>!b.includes(a),
+        })[rule]();
+    } catch {
+        return false;
+    }
+};
+
+const returnObject = async(context, path, args) => {
+    const parts = path.split('::');
+    let current = context;
+    for (const part of parts) {
+        let [_, key, func, subkey, rule, val, mapFunc, mapKey] = part.match(/^(.+?)(?:\((find|filter|findIndex)\s+([a-z0-9_]+)\s+(eq|lt|gt|neq|lte|gte|in|nin)\s+([^\)]*)\))?(?:\((map)\s+([a-z0-9_]+)\))?$/i);
+        current = current[key];
+        if (![func, subkey, rule, val].includes(undefined)) {
+            try { val = JSON.parse(val); } catch {}
+            switch (func) {
+                case 'find': {
+                    current = current.find(it=>applyRule(it[subkey], val, rule));
+                    break;
+                }
+                case 'filter': {
+                    current = current.filter(it=>applyRule(it[subkey], val, rule));
+                    break;
+                }
+                case 'findIndex': {
+                    current = current.findIndex(it=>applyRule(it[subkey], val, rule));
+                    break;
+                }
+                default: {
+                    break;
+                }
+            }
+        }
+        if (![mapFunc, mapKey].includes(undefined)) {
+            switch (mapFunc) {
+                case 'map': {
+                    current = current.map(it=>it[mapKey]);
+                    break;
+                }
+                default: {
+                    break;
+                }
+            }
+        }
+        if (current === undefined || current === null) {
+            break;
+        }
+    }
+    if (isTrueBoolean(args.call)) {
+        try {
+            return JSON.stringify(await current());
+        } catch (ex) {
+            toastr.error(ex.message);
+        }
+    }
+    if (typeof current == 'object' && current !== null) {
+        return JSON.stringify(current);
+    }
+    return current ?? '';
+};
+
+const returnContext = async (args, path) => {
+    const context = getContext();
+    return await returnObject(context, path, args);
+};
+const returnWindow = async (args, path) => {
+    return await returnObject(window, path, args);
+};
+
+registerSlashCommand('ctx', (args, value) => returnContext(args, value), [], '<span class="monospace">key::subkey</span> – Access SillyTavern\'s application context. Use <span class="monospace">/ctx?</span> for more info. Example: <span class="monospace">/ctx chatId | /echo</span> or <span class="monospace">/ctx characters(find name eq {{char}})::personality | /echo</span>', true, true);
+registerSlashCommand('ctx-window', (args, value) => returnWindow(args, value), [], '<span class="monospace">key::subkey</span> – Access window. Use <span class="monospace">/ctx?</span> for more info. Example: <span class="monospace">/ctx-window innerWidth | /echo</span>', true, true);
+registerSlashCommand('ctx-help', () => showHelp(), ['ctx?'], 'get help for the /ctx slash command', true, true);
