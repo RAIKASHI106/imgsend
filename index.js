@@ -1,92 +1,49 @@
 import {
-  extension_settings,
   SlashCommand,
   SlashCommandParser,
   SlashCommandArgument,
   ARGUMENT_TYPE,
 } from "../../../extensions.js";
-import { saveSettingsDebounced } from "../../../../script.js";
 
-const extensionName = "danbooru-autotagger";
+// The name of the extension (it should match your folder name)
+const extensionName = "simple-extension";
 const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
-const extensionSettings = extension_settings[extensionName];
-const defaultSettings = {};
 
-// Load settings
-async function loadSettings() {
-  extension_settings[extensionName] = extension_settings[extensionName] || {};
-  if (Object.keys(extension_settings[extensionName]).length === 0) {
-    Object.assign(extension_settings[extensionName], defaultSettings);
-  }
-
-  $("#example_setting")
-    .prop("checked", extension_settings[extensionName].example_setting)
-    .trigger("input");
+// Register a simple command
+function registerSimpleCommand() {
+  SlashCommandParser.addCommandObject(
+    SlashCommand.fromProps({
+      name: "hello",
+      callback: (namedArgs, unnamedArgs) => {
+        return "Hello, world! This is a simple test command.";
+      },
+      returns: "returns a simple greeting message",
+      unnamedArgumentList: [
+        SlashCommandArgument.fromProps({
+          description: "A placeholder argument (not required)",
+          typeList: ARGUMENT_TYPE.STRING,
+          isRequired: false,
+        }),
+      ],
+      helpString: `
+        <div>
+          A simple test command that returns a greeting message.
+        </div>
+        <div>
+          <strong>Example:</strong>
+          <pre><code class="language-stscript">/hello</code></pre>
+        </div>
+      `,
+    })
+  );
 }
 
-function onExampleInput(event) {
-  const value = Boolean($(event.target).prop("checked"));
-  extension_settings[extensionName].example_setting = value;
-  saveSettingsDebounced();
-}
-
-function onButtonClick() {
-  toastr.info("Danbooru Autotagger is active!");
-}
-
-// Register /danbooru slash command
-function registerDanbooruCommand() {
-  try {
-    SlashCommandParser.addCommandObject(
-      SlashCommand.fromProps({
-        name: "danbooru",
-        callback: (namedArgs, unnamedArgs) => {
-          if (!unnamedArgs.length) {
-            return "Please provide at least one tag.";
-          }
-
-          const tags = unnamedArgs.map(tag => tag.toLowerCase()).join("+");
-          const url = `https://danbooru.donmai.us/posts?tags=${encodeURIComponent(tags)}`;
-          window.open(url, "_blank");
-          return `Opened Danbooru with tags: ${tags}`;
-        },
-        returns: "opens a Danbooru search with the given tags",
-        unnamedArgumentList: [
-          SlashCommandArgument.fromProps({
-            description: "Tags to search (e.g. bikini hinata)",
-            typeList: ARGUMENT_TYPE.STRING,
-            isRequired: true,
-          }),
-        ],
-        helpString: `
-          <div>
-            Opens Danbooru in a new tab with the provided tags.
-          </div>
-          <div>
-            <strong>Example:</strong>
-            <pre><code class="language-stscript">/danbooru bikini hyuuga_hinata</code></pre>
-          </div>
-        `,
-      })
-    );
-    console.log("[Danbooru Autotagger] Slash command '/danbooru' registered.");
-  } catch (error) {
-    console.error("[Danbooru Autotagger] Error registering '/danbooru' command:", error);
-  }
-}
-
-// Init extension
+// Initialize the extension and register the command
 jQuery(async () => {
   try {
-    const settingsHtml = await $.get(`${extensionFolderPath}/settings.html`);
-    $("#extensions_settings2").append(settingsHtml);
-
-    $("#my_button").on("click", onButtonClick);
-    $("#example_setting").on("input", onExampleInput);
-
-    await loadSettings();
-    registerDanbooruCommand();
+    registerSimpleCommand();
+    console.log("[Simple Extension] 'hello' command registered successfully.");
   } catch (error) {
-    console.error("[Danbooru Autotagger] Error during extension initialization:", error);
+    console.error("[Simple Extension] Error registering command:", error);
   }
 });
