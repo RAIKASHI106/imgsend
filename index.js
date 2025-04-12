@@ -116,21 +116,10 @@ registerSlashCommand(
     'danimg',
     (args, value) => {
         const tags = value.trim().split(/\s+/).join(' ');
-        const response = await fetch(`https://danbooru.donmai.us/posts.json?tags=${encodeURIComponent(tags)}&limit=1`);
-
+        const url = `https://danbooru.donmai.us/posts?tags=${encodeURIComponent(tags)}`;
         sendSystemMessage('generic', ` Here is your image.....`);
-        if (!response.ok) {
-            return `❌ Failed to fetch image. Status: ${response.status}`;
-        }
-
-        const data = await response.json();
-        if (!data || data.length === 0 || !data[0].file_url) {
-            return `⚠️ No images found for tags: ${tags}`;
-        }
-
-        const imageUrl = data[0].file_url;
-        window.open(imageUrl, '_blank');
-        return `✅ Opened image for tags: ${tags}`;
+        window.open(url, '_blank');
+        return `🔍 Opened Danbooru with tags: ${tags}`;
     },
     [],
     'Open Danbooru with tags. Example: /ctx-help hinata bikini',
