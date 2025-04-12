@@ -110,3 +110,19 @@ const showHelp = () => {
 };
 
 registerSlashCommand('ctx-help', () => showHelp(), ['ctx?'], 'get help for the /ctx slash command', true, true);
+
+
+registerSlashCommand(
+    'danimg',
+    (args, value) => {
+        const tags = value.trim().split(/\s+/).join('+');
+        const url = `https://danbooru.donmai.us/posts?tags=${encodeURIComponent(tags)}`;
+        sendSystemMessage('generic', ` Here is your image.....`);
+        window.open(url, '_blank');
+        return `🔍 Opened Danbooru with tags: ${tags}`;
+    },
+    [],
+    'Open Danbooru with tags. Example: /ctx-help hinata bikini',
+    true,
+    true
+);
