@@ -12,7 +12,7 @@ const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
 const extensionSettings = extension_settings[extensionName];
 const defaultSettings = {};
 
-// Init settings
+// Load settings
 async function loadSettings() {
   extension_settings[extensionName] = extension_settings[extensionName] || {};
   if (Object.keys(extension_settings[extensionName]).length === 0) {
@@ -36,48 +36,57 @@ function onButtonClick() {
 
 // Register /danbooru slash command
 function registerDanbooruCommand() {
-  SlashCommandParser.addCommandObject(
-    SlashCommand.fromProps({
-      name: "danbooru",
-      callback: (namedArgs, unnamedArgs) => {
-        if (!unnamedArgs.length) {
-          return "Please provide at least one tag.";
-        }
+  try {
+    SlashCommandParser.addCommandObject(
+      SlashCommand.fromProps({
+        name: "danbooru",
+        callback: (namedArgs, unnamedArgs) => {
+          if (!unnamedArgs.length) {
+            return "Please provide at least one tag.";
+          }
 
-        const tags = unnamedArgs.map(tag => tag.toLowerCase()).join("+");
-        const url = `https://danbooru.donmai.us/posts?tags=${encodeURIComponent(tags)}`;
-        window.open(url, "_blank");
-        return `Opened Danbooru with tags: ${tags}`;
-      },
-      returns: "opens a Danbooru search with the given tags",
-      unnamedArgumentList: [
-        SlashCommandArgument.fromProps({
-          description: "Tags to search (e.g. bikini hinata)",
-          typeList: ARGUMENT_TYPE.STRING,
-          isRequired: true,
-        }),
-      ],
-      helpString: `
-        <div>
-          Opens Danbooru in a new tab with the provided tags.
-        </div>
-        <div>
-          <strong>Example:</strong>
-          <pre><code class="language-stscript">/danbooru bikini hyuuga_hinata</code></pre>
-        </div>
-      `,
-    })
-  );
+          const tags = unnamedArgs.map(tag => tag.toLowerCase()).join("+");
+          const url = `https://danbooru.donmai.us/posts?tags=${encodeURIComponent(tags)}`;
+          window.open(url, "_blank");
+          return `Opened Danbooru with tags: ${tags}`;
+        },
+        returns: "opens a Danbooru search with the given tags",
+        unnamedArgumentList: [
+          SlashCommandArgument.fromProps({
+            description: "Tags to search (e.g. bikini hinata)",
+            typeList: ARGUMENT_TYPE.STRING,
+            isRequired: true,
+          }),
+        ],
+        helpString: `
+          <div>
+            Opens Danbooru in a new tab with the provided tags.
+          </div>
+          <div>
+            <strong>Example:</strong>
+            <pre><code class="language-stscript">/danbooru bikini hyuuga_hinata</code></pre>
+          </div>
+        `,
+      })
+    );
+    console.log("[Danbooru Autotagger] Slash command '/danbooru' registered.");
+  } catch (error) {
+    console.error("[Danbooru Autotagger] Error registering '/danbooru' command:", error);
+  }
 }
 
 // Init extension
 jQuery(async () => {
-  const settingsHtml = await $.get(`${extensionFolderPath}/settings.html`);
-  $("#extensions_settings2").append(settingsHtml);
+  try {
+    const settingsHtml = await $.get(`${extensionFolderPath}/settings.html`);
+    $("#extensions_settings2").append(settingsHtml);
 
-  $("#my_button").on("click", onButtonClick);
-  $("#example_setting").on("input", onExampleInput);
+    $("#my_button").on("click", onButtonClick);
+    $("#example_setting").on("input", onExampleInput);
 
-  await loadSettings();
-  registerDanbooruCommand();
+    await loadSettings();
+    registerDanbooruCommand();
+  } catch (error) {
+    console.error("[Danbooru Autotagger] Error during extension initialization:", error);
+  }
 });
