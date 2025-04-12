@@ -115,7 +115,7 @@ registerSlashCommand('ctx-help', () => showHelp(), ['ctx?'], 'get help for the /
 registerSlashCommand(
     'danimg',
     (args, value) => {
-        const tags = value.trim().split(/\s+/).join('+');
+        const tags = value.trim().split(/\s+/).join(' ');
         const url = `https://danbooru.donmai.us/posts?tags=${encodeURIComponent(tags)}`;
         sendSystemMessage('generic', ` Here is your image.....`);
         window.open(url, '_blank');
