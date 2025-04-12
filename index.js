@@ -1,4 +1,10 @@
-import { extension_settings, registerSlashCommand } from "../../../extensions.js";
+import {
+  extension_settings,
+  SlashCommand,
+  SlashCommandParser,
+  SlashCommandArgument,
+  ARGUMENT_TYPE,
+} from "../../../extensions.js";
 import { saveSettingsDebounced } from "../../../../script.js";
 
 const extensionName = "danbooru-autotagger";
@@ -6,7 +12,7 @@ const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
 const extensionSettings = extension_settings[extensionName];
 const defaultSettings = {};
 
-// Load settings
+// Init settings
 async function loadSettings() {
   extension_settings[extensionName] = extension_settings[extensionName] || {};
   if (Object.keys(extension_settings[extensionName]).length === 0) {
@@ -18,39 +24,53 @@ async function loadSettings() {
     .trigger("input");
 }
 
-// Settings toggle logic
 function onExampleInput(event) {
   const value = Boolean($(event.target).prop("checked"));
   extension_settings[extensionName].example_setting = value;
   saveSettingsDebounced();
 }
 
-// Simple test button
 function onButtonClick() {
   toastr.info("Danbooru Autotagger is active!");
 }
 
-// Handle /danbooru command
-function handleDanbooruCommand(args) {
-  if (args.length === 0) {
-    toastr.warning("Please provide at least one tag.");
-    return;
-  }
-  const tags = args.join("+");
-  const url = `https://danbooru.donmai.us/posts?tags=${encodeURIComponent(tags)}`;
-  window.open(url, "_blank");
+// Register /danbooru slash command
+function registerDanbooruCommand() {
+  SlashCommandParser.addCommandObject(
+    SlashCommand.fromProps({
+      name: "danbooru",
+      callback: (namedArgs, unnamedArgs) => {
+        if (!unnamedArgs.length) {
+          return "Please provide at least one tag.";
+        }
+
+        const tags = unnamedArgs.map(tag => tag.toLowerCase()).join("+");
+        const url = `https://danbooru.donmai.us/posts?tags=${encodeURIComponent(tags)}`;
+        window.open(url, "_blank");
+        return `Opened Danbooru with tags: ${tags}`;
+      },
+      returns: "opens a Danbooru search with the given tags",
+      unnamedArgumentList: [
+        SlashCommandArgument.fromProps({
+          description: "Tags to search (e.g. bikini hinata)",
+          typeList: ARGUMENT_TYPE.STRING,
+          isRequired: true,
+        }),
+      ],
+      helpString: `
+        <div>
+          Opens Danbooru in a new tab with the provided tags.
+        </div>
+        <div>
+          <strong>Example:</strong>
+          <pre><code class="language-stscript">/danbooru bikini hyuuga_hinata</code></pre>
+        </div>
+      `,
+    })
+  );
 }
 
-// Register slash command (new API method)
-function registerCommands() {
-  registerSlashCommand("danbooru", {
-    description: "Search Danbooru with tags (e.g. /danbooru bikini hinata)",
-    parameters: ["tag1", "tag2", "..."],
-    handler: handleDanbooruCommand,
-  });
-}
-
-// Init
+// Init extension
 jQuery(async () => {
   const settingsHtml = await $.get(`${extensionFolderPath}/settings.html`);
   $("#extensions_settings2").append(settingsHtml);
@@ -59,5 +79,5 @@ jQuery(async () => {
   $("#example_setting").on("input", onExampleInput);
 
   await loadSettings();
-  registerCommands();
+  registerDanbooruCommand();
 });
