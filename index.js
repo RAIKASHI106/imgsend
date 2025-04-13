@@ -20,9 +20,8 @@ registerSlashCommand(
 );
 
 
-
 registerSlashCommand(
-    'imgdan',
+    'danimg',
     async (args, value) => {
         const tags = value.trim().split(/\s+/).join('+');
         const apiUrl = `https://danbooru.donmai.us/posts.json?tags=${encodeURIComponent(tags)}&limit=1&sort=score`;
@@ -38,13 +37,28 @@ registerSlashCommand(
                 return `⚠️ No images found for tags: ${tags}`;
             }
 
-            const imageUrl = data[0]?.file_url;
+            let imageUrl = data[0]?.file_url;
             if (!imageUrl) {
-                return `⚠️ Image found, but no file_url available.`;
+                return `⚠️ No image URL available for that post.`;
             }
 
-            sendSystemMessage('generic', `Here is your image for "${tags}": <br><img src="${imageUrl}" style="max-width:100%">`);
-            return `✅ Sent image from Danbooru for tags: ${tags}`;
+            // Make sure image URL is absolute
+            if (imageUrl.startsWith('//')) {
+                imageUrl = `https:${imageUrl}`;
+            } else if (!imageUrl.startsWith('http')) {
+                imageUrl = `https://danbooru.donmai.us${imageUrl}`;
+            }
+
+            // HTML image with fallback link
+            sendSystemMessage(
+                'generic',
+                `Here is your image for "<strong>${tags}</strong>":<br>
+                <a href="${imageUrl}" target="_blank">
+                    <img src="${imageUrl}" style="max-width:100%; border-radius:8px" onerror="this.onerror=null; this.src=''; this.outerHTML='⚠️ Could not load image. <a href=${imageUrl} target=_blank>Click here to open</a>';">
+                </a>`
+            );
+
+            return `✅ Sent top Danbooru image for: ${tags}`;
         } catch (error) {
             return `❌ Error: ${error.message}`;
         }
