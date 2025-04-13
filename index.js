@@ -2,7 +2,6 @@ import { sendSystemMessage } from '../../../../script.js';
 import { getContext } from '../../../extensions.js';
 import { registerSlashCommand } from '../../../slash-commands.js';
 import { isTrueBoolean } from '../../../utils.js';
-import { addMessage } from '../../../../script.js';
 
 
 registerSlashCommand(
@@ -16,27 +15,6 @@ registerSlashCommand(
     },
     [],
     'Open Danbooru with tags. Example: /ctx-help hinata bikini',
-    true,
-    true
-);
-
-registerSlashCommand(
-    'getimg',
-    async (args, value) => {
-        const tags = value.trim().split(/\s+/).join('+');
-        const apiUrl = `https://danbooru.donmai.us/posts.json?tags=${encodeURIComponent(tags)}&limit=1&sort=score`;
-
-        const response = await fetch(apiUrl);
-        const data = await response.json();
-        let imageUrl = data[0].file_url;
-
-        sendSystemMessage('generic', `Here is your image for "${tags}": ![image](${imageUrl})`);
-
-        
-        return;
-    },
-    [],
-    'Gets the top Danbooru image result and sends it in chat. Example: /danimg hinata bikini',
     true,
     true
 );
