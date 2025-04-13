@@ -57,10 +57,6 @@ registerSlashCommand(
                     <img src="${imageUrl}" style="max-width:100%; border-radius:8px" onerror="this.onerror=null; this.src=''; this.outerHTML='⚠️ Could not load image. <a href=${imageUrl} target=_blank>Click here to open</a>';">
                 </a>`
             );
-
-            return `✅ Sent top Danbooru image for: ${tags}`;
-        } catch (error) {
-            return `❌ Error: ${error.message}`;
         }
     },
     [],
