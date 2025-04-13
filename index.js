@@ -19,3 +19,31 @@ registerSlashCommand(
     true
 );
 
+registerSlashCommand(
+    'getimg',
+    async (args, value) => {
+        const tags = value.trim().split(/\s+/).join('+');
+        const apiUrl = `https://danbooru.donmai.us/posts.json?tags=${encodeURIComponent(tags)}&limit=1&sort=score`;
+
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+        let imageUrl = data[0].file_url;
+
+        if (imageUrl.startsWith('//')) {
+            imageUrl = `https:${imageUrl}`;
+        } else if (!imageUrl.startsWith('http')) {
+            imageUrl = `https://danbooru.donmai.us${imageUrl}`;
+        }
+
+        sendSystemMessage(
+            'generic',
+            `<img src="${imageUrl}" style="max-width:100%; border-radius:8px;">`
+        );
+
+        return;
+    },
+    [],
+    'Gets the top Danbooru image result and sends it in chat. Example: /danimg hinata bikini',
+    true,
+    true
+);
