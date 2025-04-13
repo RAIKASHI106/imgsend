@@ -116,14 +116,12 @@ registerSlashCommand(
     'danimg',
     (args, value) => {
         const tags = value.trim().split(/\s+/).join(' ');
-        const url = `https://danbooru.donmai.us/posts?tags=${encodeURIComponent(tags)}`;
-        sendSystemMessage('generic', ` Here is your image.....`);
         const response = await fetch(`https://danbooru.donmai.us/posts.json?tags=${encodeURIComponent(tags)}&limit=20`);
         const data = await response.json();
         const randomPost = data[Math.floor(Math.random() * data.length)];
         const imageUrl = randomPost?.file_url;
+        sendSystemMessage('generic', ` Here is your image.....`);
         window.open(url, '_blank');
-        return `🔍 Opened Danbooru with tags: ${tags}`;
         window.open(imageUrl, '_blank');
     },
     [],
