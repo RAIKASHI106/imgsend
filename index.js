@@ -21,7 +21,7 @@ registerSlashCommand(
 
 
 registerSlashCommand(
-    'danimg',
+    'imgdan',
     async (args, value) => {
         const tags = value.trim().split(/\s+/).join('+');
         const apiUrl = `https://danbooru.donmai.us/posts.json?tags=${encodeURIComponent(tags)}&limit=1&sort=score`;
