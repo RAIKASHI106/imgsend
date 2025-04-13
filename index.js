@@ -116,13 +116,10 @@ registerSlashCommand(
     'danimg',
     (args, value) => {
         const tags = value.trim().split(/\s+/).join(' ');
-        const response = await fetch(`https://danbooru.donmai.us/posts.json?tags=${encodeURIComponent(tags)}&limit=20`);
-        const data = await response.json();
-        const randomPost = data[Math.floor(Math.random() * data.length)];
-        const imageUrl = randomPost?.file_url;
+        const url = `https://danbooru.donmai.us/posts?tags=${encodeURIComponent(tags)}`;
         sendSystemMessage('generic', ` Here is your image.....`);
         window.open(url, '_blank');
-        window.open(imageUrl, '_blank');
+        return `🔍 Opened Danbooru with tags: ${tags}`;
     },
     [],
     'Open Danbooru with tags. Example: /ctx-help hinata bikini',
