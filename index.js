@@ -29,9 +29,10 @@ registerSlashCommand(
         const response = await fetch(apiUrl);
         const data = await response.json();
         let imageUrl = data[0].file_url;
-        const preview = `<div>Here is your image for <strong>${tags}</strong>:<br><img src="${imageUrl}" style="max-width:300px; border-radius:8px;"/></div>`;
-        addMessage('user', preview); // You can also use 'char', 'bot', or 'system'
 
+        sendSystemMessage('generic', `Here is your image for "${tags}": ![image](${imageUrl})`);
+
+        
         return;
     },
     [],
