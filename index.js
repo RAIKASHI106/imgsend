@@ -35,10 +35,8 @@ registerSlashCommand(
             imageUrl = `https://danbooru.donmai.us${imageUrl}`;
         }
 
-        sendSystemMessage(
-            'generic',
-            `<img src="${imageUrl}" style="max-width:100%; border-radius:8px;">`
-        );
+        sendSystemMessage('generic', `Here is your image for "${tags}": ![image](${imageUrl})`);
+
 
         return;
     },
