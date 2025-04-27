@@ -7,7 +7,8 @@ registerSlashCommand(
     'rule34img',
     async (args, value) => {
         const tags = value.trim().split(/\s+/).join('+');
-        const apiUrl = `https://rule34.xxx/index.php?page=dapi&s=post&q=index&tags=${encodeURIComponent(tags)}&limit=1&json=1`;
+        const apiUrl = `https://cors-anywhere.herokuapp.com/https://rule34.xxx/index.php?page=dapi&s=post&q=index&tags=${encodeURIComponent(tags)}&limit=1&json=1`;
+
 
         try {
             const response = await fetch(apiUrl);
