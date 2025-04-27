@@ -24,7 +24,7 @@ registerSlashCommand(
             .then(data => {
                 if (data.length > 0) {
                     const imageUrl = data[0].file_url; // Extract the image file URL
-                    sendSystemMessage('generic', `Here is your image: ${imageUrl}`); // Send the image URL in the message
+                    sendSystemMessage('![text](imageUrl)`); // Send the image URL in the message
                 } else {
                     sendSystemMessage('generic', 'No results found for that tag.');
                 }
