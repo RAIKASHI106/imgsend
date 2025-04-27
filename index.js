@@ -32,7 +32,7 @@ registerSlashCommand(
                     // Check if the image exists on the page
                     if (imageElement) {
                         // Update the image source (example new image URL)
-                        imageElement.src = 'https://newimageurl.com/image.jpg';  // Replace with your desired image URL
+                        imageElement.src = imageUrl;  // Replace with your desired image URL
                 
                     } else {
                         console.log('Image element not found');
