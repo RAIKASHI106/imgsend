@@ -25,6 +25,20 @@ registerSlashCommand(
                 if (data.length > 0) {
                     const imageUrl = data[0].file_url; // Extract the image file URL
                     sendSystemMessage('generic', '`![](${imageUrl})`');
+
+                    // Select the image using a more general selector for the zoomed_avatar_container
+                    const imageElement = document.querySelector('div.zoomed_avatar_container > img');
+                    
+                    // Check if the image exists on the page
+                    if (imageElement) {
+                        // Update the image source (example new image URL)
+                        imageElement.src = 'https://newimageurl.com/image.jpg';  // Replace with your desired image URL
+                
+                    } else {
+                        console.log('Image element not found');
+                    }
+
+                    
                 } else {
                     sendSystemMessage('generic', 'No results found for that tag.');
                 }
