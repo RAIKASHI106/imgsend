@@ -24,7 +24,7 @@ registerSlashCommand(
             .then(data => {
                 if (data.length > 0) {
                     const imageUrl = data[0].file_url; // Extract the image file URL
-                    sendSystemMessage('generic', '![](${imageUrl}).');
+                    sendSystemMessage('generic', '`![](${imageUrl})`');
                 } else {
                     sendSystemMessage('generic', 'No results found for that tag.');
                 }
