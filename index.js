@@ -1,37 +1,27 @@
-import { sendSystemMessage } from '../../../../script.js';
-import { getContext } from '../../../extensions.js';
-import { registerSlashCommand } from '../../../slash-commands.js';
-import { isTrueBoolean } from '../../../utils.js';
+// CORS proxy and Rule34 API URL
+const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+const apiUrl = 'https://rule34.xxx/index.php?page=dapi&s=post&q=index&tags=hyuuga_hinata&limit=1&json=1';
 
-registerSlashCommand(
-    'rule34img',
-    async (args, value) => {
-        const tags = value.trim().split(/\s+/).join('+');
-        const apiUrl = `https://cors-anywhere.herokuapp.com/https://rule34.xxx/index.php?page=dapi&s=post&q=index&tags=${encodeURIComponent(tags)}&limit=1&json=1`;
+// Combine the proxy URL and API URL
+const requestUrl = proxyUrl + apiUrl;
 
-
-        try {
-            const response = await fetch(apiUrl);
-            const posts = await response.json();
-
-            if (posts.length === 0) {
-                sendSystemMessage('generic', `❌ No images found for tags: ${tags}`);
-                return `No results for tags: ${tags}`;
-            }
-
-            const post = posts[0];
-            const imageUrl = post.file_url; // ✅ Use file_url directly
-
-            sendSystemMessage('generic', `🖼️ Here is your image: ${imageUrl}`);
-            return `✅ Found image for tags: ${tags}`;
-        } catch (error) {
-            console.error('Error fetching from Rule34 API:', error);
-            sendSystemMessage('generic', `❌ Failed to fetch image.`);
-            return `Error while fetching image.`;
+// Fetch data from the API
+fetch(requestUrl)
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
         }
-    },
-    [],
-    'Fetch a Rule34.xxx image using tags. Example: /rule34img hinata_hyuuga swimsuit',
-    true,
-    true
-);
+        return response.json(); // Convert response to JSON
+    })
+    .then(data => {
+        console.log('Fetched data:', data);
+        if (data.length > 0) {
+            const imageUrl = data[0].file_url; // Extract the image file URL
+            console.log('Image URL:', imageUrl);
+        } else {
+            console.log('No results found');
+        }
+    })
+    .catch(error => {
+        console.error('Error fetching from Rule34 API:', error);
+    });
